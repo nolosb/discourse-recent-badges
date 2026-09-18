@@ -1,0 +1,5 @@
+en:
+  theme_metadata:
+    description: Recently earned badges with responsive card and row layouts.
+    settings:
+      example_setting: A description of a setting.
