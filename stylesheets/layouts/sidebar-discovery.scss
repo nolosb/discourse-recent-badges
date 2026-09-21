@@ -1,0 +1,64 @@
+// Match discovery-sidebar's grid, but activate only when our content exists.
+// Core keeps discovery wrappers on other routes and while badges are empty.
+.discovery-layout:has(.discovery-layout__sidebar .highlighted-badges) {
+  .discovery-layout__list,
+  .discovery-layout__sidebar {
+    min-width: 0;
+  }
+
+  .discovery-layout__sidebar .highlighted-badges {
+    margin-block: 0;
+  }
+
+  @include viewport.from(lg) {
+    display: grid;
+    grid-template-columns:
+      minmax(0, 1fr)
+      var(--tc-highlightedBadges-sidebar-width);
+    grid-template-rows: repeat(8, auto) 1fr;
+    column-gap: var(--tc-highlightedBadges-sidebar-gap);
+
+    > * {
+      grid-column: 1;
+    }
+
+    .discovery-layout__content {
+      display: contents;
+
+      > * {
+        grid-column: 1;
+      }
+    }
+
+    .discovery-layout__sidebar {
+      grid-column: 2;
+      grid-row: 1 / -1;
+    }
+  }
+
+  @include viewport.until(lg) {
+    display: flex;
+    flex-direction: column;
+
+    .discovery-layout__content {
+      display: contents;
+    }
+
+    .discovery-layout__sidebar {
+      order: -1;
+      margin-block-end: var(--space-4);
+    }
+  }
+
+  .sidebar-discovery__layout,
+  .sidebar-discovery__block-container,
+  .sidebar-discovery__block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tc-highlightedBadges-panel-gap);
+  }
+}
+
+.sidebar-discovery__block--highlighted-badges:not(:has(.highlighted-badges)) {
+  display: none;
+}

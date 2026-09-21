@@ -1,0 +1,16 @@
+:root {
+  --tc-highlightedBadges-sidebar-width: 18rem;
+  --tc-highlightedBadges-sidebar-gap: var(--space-6);
+  --tc-highlightedBadges-panel-gap: var(--space-4);
+  --tc-highlightedBadges-bg: var(--secondary);
+  --tc-highlightedBadges-border: var(--primary-200);
+  --tc-highlightedBadges-text: var(--primary);
+  --tc-highlightedBadges-muted: var(--primary-high);
+  --tc-highlightedBadges-accent: var(--tertiary);
+  --tc-highlightedBadges-hover: var(--primary-very-low);
+  --tc-highlightedBadges-radius: var(--d-border-radius-large);
+  --tc-highlightedBadges-padding: 1rem;
+  --tc-highlightedBadges-title-size: 1.25rem;
+  --tc-highlightedBadges-text-size: 1rem;
+  --tc-highlightedBadges-meta-size: 0.875rem;
+}
