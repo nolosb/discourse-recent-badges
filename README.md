@@ -1,4 +1,4 @@
-# Highlighted Badges
+# Recent Badges
 
 An independent Discourse theme component extracted from the Discourse Skills demo theme. The demo theme is unchanged; this component has no dependency on its styles, settings, translations, or layout.
 
