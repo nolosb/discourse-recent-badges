@@ -3,7 +3,7 @@ import {
   createBadgeLoader,
   GRANT_LIMIT,
   recentMembers,
-} from "../../javascripts/discourse/lib/badge-grants";
+} from "../../discourse/lib/badge-grants";
 
 module("Featured Badges | recent members", function () {
   test("keeps each member's first grant in feed order before applying the member limit", function (assert) {
