@@ -5,7 +5,7 @@ import {
   recentMembers,
 } from "../../javascripts/discourse/lib/badge-grants";
 
-module("Highlighted Badges | recent members", function () {
+module("Featured Badges | recent members", function () {
   test("keeps each member's first grant in feed order before applying the member limit", function (assert) {
     const grants = [
       { id: 3, user: { id: 10 }, grantedAt: 400 },
@@ -39,7 +39,7 @@ module("Highlighted Badges | recent members", function () {
   });
 });
 
-module("Highlighted Badges | requests", function () {
+module("Featured Badges | requests", function () {
   test("shares one feed request across concurrent mounts and return visits", async function (assert) {
     const calls = [];
     const load = createBadgeLoader({

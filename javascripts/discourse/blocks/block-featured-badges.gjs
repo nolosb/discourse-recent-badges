@@ -17,35 +17,59 @@ import dAvatar from "discourse/ui-kit/helpers/d-avatar";
 import { i18n } from "discourse-i18n";
 import { loadBadgeGrants } from "../lib/badge-data";
 
-const TickerEntry = <template>
-  <li class="highlighted-badge {{@grant.badge.badgeTypeClassName}}">
-    <DUserLink @user={{@grant.user}} class="highlighted-badge__avatar">
+const FeaturedBadge = <template>
+  <li class="featured-badge {{@grant.badge.badgeTypeClassName}}">
+    <DUserLink @user={{@grant.user}} class="featured-badge__avatar">
       {{dAvatar @grant.user imageSize="large"}}
     </DUserLink>
-    <div class="highlighted-badge__body">
-      <DUserLink @user={{@grant.user}} class="highlighted-badge__username">
+    <div class="featured-badge__body">
+      <DUserLink @user={{@grant.user}} class="featured-badge__username">
         {{@grant.user.username}}
       </DUserLink>
       {{! BadgePill doesn't splat attributes — the class must live on a wrapper }}
-      <span class="highlighted-badge__badge">
+      <span class="featured-badge__badge">
         <BadgePill
           @badge={{@grant.badge}}
           @user={{@grant.user}}
           @showName={{true}}
         />
       </span>
-      <span class="highlighted-badge__earned">{{@grant.earnedAgo}}</span>
+      <span class="featured-badge__earned">{{@grant.earnedAgo}}</span>
     </div>
   </li>
 </template>;
 
-@block("theme:highlighted-badges:recent", {
+// Header, body and footer, as in the panel blocks of the theme skills theme.
+// The header and footer stay in place while the body loads. Wide containers
+// show the link in the header, narrow ones in the footer.
+const PanelChrome = <template>
+  <div class="featured-badges">
+    <section class="featured-badges__panel">
+      <header class="featured-badges__header">
+        <h3 class="featured-badges__title">{{i18n (themePrefix @title)}}</h3>
+        <a href={{getURL "/badges"}} class="featured-badges__link --header">
+          {{i18n (themePrefix @linkLabel)}}
+        </a>
+      </header>
+      <div class="featured-badges__body">
+        {{yield}}
+      </div>
+      <footer class="featured-badges__footer">
+        <a href={{getURL "/badges"}} class="featured-badges__link">
+          {{i18n (themePrefix @linkLabel)}}
+        </a>
+      </footer>
+    </section>
+  </div>
+</template>;
+
+@block("theme:featured-badges:recent", {
   description:
     "Recently earned badges, adapting to the width of their container",
   allowedOutlets: ["main-outlet-blocks", "sidebar-discovery"],
   args: {
-    title: { type: "string", default: "badges_ticker.title" },
-    buttonLabel: { type: "string", default: "badges_ticker.button_label" },
+    title: { type: "string", default: "featured_badges.title" },
+    linkLabel: { type: "string", default: "featured_badges.link_label" },
     badgeIds: { type: "string", default: "" },
     tier: {
       type: "string",
@@ -55,7 +79,7 @@ const TickerEntry = <template>
     count: { type: "number", integer: true, min: 1, max: 50, default: 6 },
   },
 })
-export default class BlockHighlightedBadges extends Component {
+export default class BlockFeaturedBadges extends Component {
   @service currentUser;
   @service router;
   @service siteSettings;
@@ -74,6 +98,10 @@ export default class BlockHighlightedBadges extends Component {
       .split("|")
       .map(Number)
       .filter((id) => Number.isInteger(id) && id > 0);
+  }
+
+  get skeletonRows() {
+    return Array.from({ length: this.args.count }, (_, index) => index);
   }
 
   @action
@@ -133,71 +161,58 @@ export default class BlockHighlightedBadges extends Component {
         @retainWhileReloading={{true}}
       >
         <:loading>
-          <div class="highlighted-badges" aria-busy="true">
-            <section class="highlighted-badges__panel">
-              <div class="highlighted-badges__header">
-                <h3 class="highlighted-badges__title">
-                  {{i18n (themePrefix @title)}}
-                </h3>
-              </div>
+          <PanelChrome @title={{@title}} @linkLabel={{@linkLabel}}>
+            <div class="featured-badges__loading" aria-busy="true">
               <DSkeleton
-                class="highlighted-badges__loading"
+                class="featured-badges__skeleton --cards"
                 @variant="rect"
                 @count={{@count}}
               />
-            </section>
-          </div>
+              <div class="featured-badges__skeleton --rows" aria-hidden="true">
+                {{#each this.skeletonRows as |row|}}
+                  <div class="featured-badges__skeleton-row" data-row={{row}}>
+                    <DSkeleton @variant="circle" @size="1.5rem" />
+                    <DSkeleton @variant="text" @width="55%" />
+                    <DSkeleton @variant="text" @width="2.5rem" />
+                  </div>
+                {{/each}}
+              </div>
+            </div>
+          </PanelChrome>
         </:loading>
         <:empty></:empty>
         <:content as |grants|>
           {{#if grants.length}}
-            <div class="highlighted-badges">
-              <section class="highlighted-badges__panel">
-                <div class="highlighted-badges__header">
-                  <h3 class="highlighted-badges__title">
-                    {{i18n (themePrefix @title)}}
-                  </h3>
-                  <a href={{getURL "/badges"}} class="highlighted-badges__link">
-                    {{i18n (themePrefix @buttonLabel)}}
-                  </a>
-                </div>
+            <PanelChrome @title={{@title}} @linkLabel={{@linkLabel}}>
+              <div class="featured-badges__scroller">
+                <DButton
+                  @icon="chevron-left"
+                  @action={{this.scrollPrev}}
+                  @translatedTitle={{i18n
+                    (themePrefix "featured_badges.previous")
+                  }}
+                  class="featured-badges__arrow --prev"
+                />
 
-                <div class="highlighted-badges__scroller">
-                  <DButton
-                    @icon="chevron-left"
-                    @action={{this.scrollPrev}}
-                    @translatedTitle={{i18n
-                      (themePrefix "badges_ticker.previous")
-                    }}
-                    class="highlighted-badges__arrow --prev"
-                  />
-
-                  <div
-                    class="highlighted-badges__viewport"
-                    {{didInsert this.registerViewport}}
-                  >
-                    <ul class="highlighted-badges__track">
-                      {{#each grants key="id" as |grant|}}
-                        <TickerEntry @grant={{grant}} />
-                      {{/each}}
-                    </ul>
-                  </div>
-
-                  <DButton
-                    @icon="chevron-right"
-                    @action={{this.scrollNext}}
-                    @translatedTitle={{i18n (themePrefix "badges_ticker.next")}}
-                    class="highlighted-badges__arrow --next"
-                  />
+                <div
+                  class="featured-badges__viewport"
+                  {{didInsert this.registerViewport}}
+                >
+                  <ul class="featured-badges__track">
+                    {{#each grants key="id" as |grant|}}
+                      <FeaturedBadge @grant={{grant}} />
+                    {{/each}}
+                  </ul>
                 </div>
 
                 <DButton
-                  class="btn-default highlighted-badges__button"
-                  @href={{getURL "/badges"}}
-                  @translatedLabel={{i18n (themePrefix @buttonLabel)}}
+                  @icon="chevron-right"
+                  @action={{this.scrollNext}}
+                  @translatedTitle={{i18n (themePrefix "featured_badges.next")}}
+                  class="featured-badges__arrow --next"
                 />
-              </section>
-            </div>
+              </div>
+            </PanelChrome>
           {{/if}}
         </:content>
       </DAsyncContent>

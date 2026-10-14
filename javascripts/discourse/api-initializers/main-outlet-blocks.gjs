@@ -1,25 +1,25 @@
 import { settings } from "virtual:theme";
 import { apiInitializer } from "discourse/lib/api";
-import BlockHighlightedBadges from "../blocks/block-highlighted-badges";
+import BlockFeaturedBadges from "../blocks/block-featured-badges";
 
 export default apiInitializer((api) => {
   api.renderBlocks("main-outlet-blocks", [
     {
-      block: BlockHighlightedBadges,
-      id: "highlighted-badges",
+      block: BlockFeaturedBadges,
+      id: "featured-badges",
       args: {
-        title: "badges_ticker.title",
-        buttonLabel: "badges_ticker.button_label",
-        badgeIds: settings.badges_ticker_badge_ids,
-        tier: settings.badges_ticker_tiers,
-        count: settings.badges_ticker_count,
+        title: "featured_badges.title",
+        linkLabel: "featured_badges.link_label",
+        badgeIds: settings.featured_badges_badge_ids,
+        tier: settings.featured_badges_tiers,
+        count: settings.featured_badges_count,
       },
       conditions: [
         { type: "setting", name: "enable_badges", enabled: true },
         {
           type: "setting",
           source: settings,
-          name: "badges_ticker_location",
+          name: "featured_badges_location",
           equals: "main",
         },
       ],

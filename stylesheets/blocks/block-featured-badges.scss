@@ -1,10 +1,10 @@
-.highlighted-badges {
-  container: highlighted-badges / inline-size;
+.featured-badges {
+  container: featured-badges / inline-size;
   min-width: 0;
   width: 100%;
   margin-block: var(--space-4);
-  color: var(--tc-highlightedBadges-text);
-  font-size: var(--tc-highlightedBadges-text-size);
+  color: var(--tc-FeaturedBadges-color-text-default);
+  font-size: var(--tc-FeaturedBadges-font-size);
 
   &__panel {
     min-width: 0;
@@ -19,13 +19,13 @@
 
   &__title {
     margin: 0;
-    font-size: var(--tc-highlightedBadges-title-size);
+    font-size: var(--tc-FeaturedBadges-title-font-size);
     font-weight: 800;
     overflow-wrap: anywhere;
   }
 
   &__link {
-    color: var(--tc-highlightedBadges-accent);
+    color: var(--tc-FeaturedBadges-color-text-link);
     font-weight: 600;
     white-space: nowrap;
   }
@@ -45,21 +45,21 @@
   }
 }
 
-.highlighted-badge {
+.featured-badge {
   min-width: 0;
 
   &__username {
-    color: var(--tc-highlightedBadges-text);
+    color: var(--tc-FeaturedBadges-color-text-default);
     font-weight: 600;
 
     &:visited {
-      color: var(--tc-highlightedBadges-text);
+      color: var(--tc-FeaturedBadges-color-text-default);
     }
   }
 
   &__earned {
-    color: var(--tc-highlightedBadges-muted);
-    font-size: var(--tc-highlightedBadges-meta-size);
+    color: var(--tc-FeaturedBadges-color-text-muted);
+    font-size: var(--tc-FeaturedBadges-meta-font-size);
     white-space: nowrap;
   }
 
@@ -76,38 +76,41 @@
   }
 }
 
-@container highlighted-badges (width < 40rem) {
-  .highlighted-badges {
+@container featured-badges (width < 40rem) {
+  .featured-badges {
     &__panel {
-      background: var(--tc-highlightedBadges-bg);
-      border: 1px solid var(--tc-highlightedBadges-border);
-      border-radius: var(--tc-highlightedBadges-radius);
+      background: var(--tc-FeaturedBadges-color-background-default);
+      border: 1px solid var(--tc-FeaturedBadges-color-border-default);
+      border-radius: var(--tc-FeaturedBadges-border-radius);
       overflow: hidden;
     }
 
     &__header {
-      padding: var(--tc-highlightedBadges-padding);
-      border-bottom: 1px solid var(--tc-highlightedBadges-border);
+      padding: var(--tc-FeaturedBadges-space-padding);
+      border-bottom: 1px solid var(--tc-FeaturedBadges-color-border-default);
     }
 
-    &__link {
+    &__link.--header {
       display: none;
+    }
+
+    &__body {
+      padding: var(--tc-FeaturedBadges-space-padding);
     }
 
     &__track {
       flex-direction: column;
       gap: var(--space-2);
-      padding: var(--tc-highlightedBadges-padding);
     }
 
-    &__button {
-      margin: 0 var(--tc-highlightedBadges-padding)
-        var(--tc-highlightedBadges-padding);
-      max-width: calc(100% - 2 * var(--tc-highlightedBadges-padding));
+    &__footer {
+      padding: var(--space-3) var(--tc-FeaturedBadges-space-padding);
+      border-top: 1px solid var(--tc-FeaturedBadges-color-border-default);
+      text-align: center;
     }
   }
 
-  .highlighted-badge {
+  .featured-badge {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
@@ -119,7 +122,7 @@
     border-radius: var(--d-border-radius);
 
     &:hover {
-      background: var(--tc-highlightedBadges-hover);
+      background: var(--tc-FeaturedBadges-color-background-default-hovered);
     }
 
     &__avatar {
@@ -153,15 +156,15 @@
   }
 }
 
-@container highlighted-badges (width >= 40rem) {
-  .highlighted-badges {
+@container featured-badges (width >= 40rem) {
+  .featured-badges {
     &__panel {
       display: flex;
       flex-direction: column;
       gap: var(--space-4);
     }
 
-    &__button {
+    &__footer {
       display: none;
     }
 
@@ -193,16 +196,16 @@
     }
   }
 
-  .highlighted-badge {
+  .featured-badge {
     display: flex;
     flex: 0 0 11rem;
     flex-direction: column;
     align-items: center;
     gap: var(--space-2);
-    padding: var(--tc-highlightedBadges-padding);
-    background: var(--tc-highlightedBadges-bg);
-    border: 1px solid var(--tc-highlightedBadges-border);
-    border-radius: var(--tc-highlightedBadges-radius);
+    padding: var(--tc-FeaturedBadges-space-padding);
+    background: var(--tc-FeaturedBadges-color-background-default);
+    border: 1px solid var(--tc-FeaturedBadges-color-border-default);
+    border-radius: var(--tc-FeaturedBadges-border-radius);
 
     &__avatar .avatar {
       width: 4rem;
@@ -226,21 +229,44 @@
   }
 }
 
-.highlighted-badges__loading {
-  --d-skeleton-item-height: 5.75rem;
-  --d-skeleton-item-width: 100%;
-  --d-skeleton-gap: var(--space-2);
-  padding: var(--tc-highlightedBadges-padding);
-
-  @container highlighted-badges (width >= 40rem) {
+// Cards in wide containers, user rows (as in the sidebar panels) in
+// narrow ones
+.featured-badges__skeleton {
+  &.--cards {
     --d-skeleton-item-height: 10rem;
     --d-skeleton-item-width: 11rem;
     --d-skeleton-gap: var(--space-4);
     flex-direction: row;
+    padding: var(--space-2);
     overflow: hidden;
 
     .d-skeleton__item {
       flex-shrink: 0;
     }
+
+    @container featured-badges (width < 40rem) {
+      display: none;
+    }
+  }
+
+  &.--rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+
+    @container featured-badges (width >= 40rem) {
+      display: none;
+    }
+  }
+}
+
+.featured-badges__skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+
+  // the name line grows, the trailing age keeps its width
+  > .d-skeleton:nth-child(2) {
+    flex: 1;
   }
 }

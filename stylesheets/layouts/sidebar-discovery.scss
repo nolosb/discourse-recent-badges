@@ -1,12 +1,12 @@
 // Match discovery-sidebar's grid, but activate only when our content exists.
 // Core keeps discovery wrappers on other routes and while badges are empty.
-.discovery-layout:has(.discovery-layout__sidebar .highlighted-badges) {
+.discovery-layout:has(.discovery-layout__sidebar .featured-badges) {
   .discovery-layout__list,
   .discovery-layout__sidebar {
     min-width: 0;
   }
 
-  .discovery-layout__sidebar .highlighted-badges {
+  .discovery-layout__sidebar .featured-badges {
     margin-block: 0;
   }
 
@@ -14,9 +14,9 @@
     display: grid;
     grid-template-columns:
       minmax(0, 1fr)
-      var(--tc-highlightedBadges-sidebar-width);
+      var(--tc-FeaturedBadges-sidebar-size-inline);
     grid-template-rows: repeat(8, auto) 1fr;
-    column-gap: var(--tc-highlightedBadges-sidebar-gap);
+    column-gap: var(--tc-FeaturedBadges-sidebar-space-gap-inline);
 
     > * {
       grid-column: 1;
@@ -55,10 +55,10 @@
   .sidebar-discovery__block {
     display: flex;
     flex-direction: column;
-    gap: var(--tc-highlightedBadges-panel-gap);
+    gap: var(--tc-FeaturedBadges-sidebar-space-gap-block);
   }
 }
 
-.sidebar-discovery__block--highlighted-badges:not(:has(.highlighted-badges)) {
+.sidebar-discovery__block--featured-badges:not(:has(.featured-badges)) {
   display: none;
 }

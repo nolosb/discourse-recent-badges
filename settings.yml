@@ -1,4 +1,4 @@
-badges_ticker_location:
+featured_badges_location:
   default: "main"
   type: enum
   choices:
@@ -6,17 +6,17 @@ badges_ticker_location:
     - sidebar
     - none
 
-badges_ticker_count:
+featured_badges_count:
   default: 6
   type: integer
   min: 1
   max: 50
 
-badges_ticker_badge_ids:
+featured_badges_badge_ids:
   type: list
   default: ""
 
-badges_ticker_tiers:
+featured_badges_tiers:
   type: enum
   default: "all"
   choices:

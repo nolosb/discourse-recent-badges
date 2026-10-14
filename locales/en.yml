@@ -2,23 +2,23 @@ en:
   theme_metadata:
     description: "Recently earned badges on the homepage, with responsive cards and compact rows."
     settings:
-      badges_ticker_location:
+      featured_badges_location:
         description: "Homepage placement. The layout adapts to the width of the selected outlet."
         choices:
           main: "Above the main content"
           sidebar: "On discovery sidebar"
           none: "Disabled"
-      badges_ticker_count: "Maximum number of distinct members to display"
-      badges_ticker_badge_ids: "Only feature these badge IDs. When set, this list takes precedence over tiers."
-      badges_ticker_tiers:
+      featured_badges_count: "Maximum number of distinct members to display"
+      featured_badges_badge_ids: "Only feature these badge IDs. When set, this list takes precedence over tiers."
+      featured_badges_tiers:
         description: "Badge tier to feature when no badge IDs are selected."
         choices:
           all: "All tiers"
           gold: "Gold"
           silver: "Silver"
           bronze: "Bronze"
-  badges_ticker:
+  featured_badges:
     title: "Recently earned"
-    button_label: "See all badges"
+    link_label: "See all badges"
     previous: "Scroll back"
     next: "Scroll forward"
