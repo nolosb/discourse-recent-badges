@@ -23,7 +23,7 @@ Both block placements are homepage-only and respect `enable_badges`. The compone
 | `badges_ticker_badge_ids` | Empty   | Selected badge IDs; these take precedence over tiers, as in the original.       |
 | `badges_ticker_tiers`     | `all`   | Dropdown: All tiers, Gold, Silver, or Bronze. Applies when no IDs are selected. |
 
-The standalone default is main content. Recipient selection is preserved: the badge index supplies eligible badges, recipients are loaded per badge, the latest grant for each user is retained, and failed requests are omitted. Discourse returns a bounded first page per badge; this is not a complete grant history. Large badge catalogs can generate many requests. Configure badge IDs or tiers to narrow the selection.
+The standalone default is main content. Recipients come from core's aggregate `/user_badges.json` feed: the 100 most recent grants across the selected badges (or every enabled, listable badge when no IDs are set), filtered by tier through `badge_type_id`. The latest grant for each member is retained, so a feed dominated by a few very active members can show fewer than `badges_ticker_count` entries.
 
 Change the title, button label, and arrow labels through the component's translations.
 
@@ -33,11 +33,11 @@ Change the title, button label, and arrow labels through the component's transla
 
 ## Request caching
 
-Successful badge-index and recipient responses are cached in memory for 15 minutes, separately for each viewer. Concurrent component mounts share pending requests; returning to the homepage within that period reuses the data. Failed requests are not cached. There is no background polling, and a full reload clears the cache.
+The grant feed is cached in memory for 15 minutes, separately for each viewer and each badge selection. Concurrent component mounts share the pending request; returning to the homepage within that period reuses the data. A failed request renders nothing and is not cached. There is no background polling, and a full reload clears the cache.
 
-Badges with zero grants are skipped when selecting from the index, and duplicate explicit badge IDs are requested only once. Selecting IDs bypasses the badge index entirely. Count and tier changes reuse matching cached responses; relative times are recalculated each time the block renders its fetched content.
+Explicit badge IDs are deduplicated and sorted, so the same selection in another order shares a cache entry. Count changes reuse the cached feed; relative times are recalculated each time the block renders its fetched content.
 
-A first visit still needs one index request plus one recipient request per eligible badge with awards (or just one request per explicit badge ID). Core has no aggregate recent-grants endpoint; reducing that first load to one request would require a server endpoint. Cached responses can delay newly earned badges by up to 15 minutes before the next visit refreshes them.
+A first visit needs a single request. Cached responses can delay newly earned badges by up to 15 minutes before the next visit refreshes them.
 
 ## Styling
 

@@ -3,7 +3,7 @@
   "component": true,
   "authors": "Discourse",
   "theme_version": "0.0.1",
-  "minimum_discourse_version": null,
+  "minimum_discourse_version": "2026.10.0-latest",
   "maximum_discourse_version": null,
   "assets": {},
   "modifiers": {

@@ -1,16 +1,17 @@
 import { module, test } from "qunit";
 import {
   createBadgeLoader,
+  GRANT_LIMIT,
   recentMembers,
 } from "../../javascripts/discourse/lib/badge-grants";
 
 module("Highlighted Badges | recent members", function () {
-  test("keeps each member's newest grant before applying the member limit", function (assert) {
+  test("keeps each member's first grant in feed order before applying the member limit", function (assert) {
     const grants = [
-      { id: 1, user: { id: 10 }, grantedAt: 100 },
-      { id: 2, user: { id: 20 }, grantedAt: 300 },
       { id: 3, user: { id: 10 }, grantedAt: 400 },
+      { id: 2, user: { id: 20 }, grantedAt: 300 },
       { id: 4, user: { id: 30 }, grantedAt: 200 },
+      { id: 1, user: { id: 10 }, grantedAt: 100 },
     ];
 
     assert.deepEqual(
@@ -18,9 +19,8 @@ module("Highlighted Badges | recent members", function () {
       [3, 2]
     );
     assert.deepEqual(
-      grants.map((grant) => grant.id),
-      [1, 2, 3, 4],
-      "does not reorder its input"
+      recentMembers(grants, 6).map((grant) => grant.id),
+      [3, 2, 4]
     );
   });
 
@@ -40,47 +40,53 @@ module("Highlighted Badges | recent members", function () {
 });
 
 module("Highlighted Badges | requests", function () {
-  test("skips unawarded badges and shares requests across concurrent mounts and return visits", async function (assert) {
-    let indexCalls = 0;
-    const grantCalls = [];
+  test("shares one feed request across concurrent mounts and return visits", async function (assert) {
+    const calls = [];
     const load = createBadgeLoader({
-      fetchBadges: async () => {
-        indexCalls++;
-        return {
-          badges: [
-            { id: 1, enabled: true, grant_count: 0, badge_type_id: 1 },
-            { id: 2, enabled: true, grant_count: 20, badge_type_id: 1 },
-            { id: 3, enabled: false, grant_count: 20, badge_type_id: 1 },
-          ],
-        };
-      },
-      fetchGrants: async (id) => {
-        grantCalls.push(id);
+      fetchGrants: async (ids, options) => {
+        calls.push({ ids, options });
         return [{ id: 10, user: { id: 5 }, grantedAt: 200 }];
       },
     });
 
     const [first, second] = await Promise.all([load({}), load({})]);
     const third = await load({});
-    assert.strictEqual(indexCalls, 1);
-    assert.deepEqual(grantCalls, [2]);
+    assert.deepEqual(calls, [
+      { ids: [], options: { badgeTypeId: undefined, limit: GRANT_LIMIT } },
+    ]);
     assert.deepEqual(first, second);
     assert.deepEqual(first, third);
   });
 
-  test("explicit IDs skip the index, are deduplicated, and take precedence over tiers", async function (assert) {
+  test("maps tiers to badge types", async function (assert) {
     const calls = [];
     const load = createBadgeLoader({
-      fetchBadges: () => {
-        throw new Error("Index should not be requested");
-      },
-      fetchGrants: async (id) => {
-        calls.push(id);
+      fetchGrants: async (ids, options) => {
+        calls.push(options.badgeTypeId);
         return [];
       },
     });
-    await load({ badgeIds: [2, "2", 3, -1], tier: "gold" });
-    assert.deepEqual(calls, [2, 3]);
+    await load({ tier: "gold" });
+    await load({ tier: "bronze" });
+    await load({ tier: "all" });
+    assert.deepEqual(calls, [1, 3, undefined]);
+  });
+
+  test("explicit IDs are normalized and take precedence over tiers", async function (assert) {
+    const calls = [];
+    const load = createBadgeLoader({
+      fetchGrants: async (ids, options) => {
+        calls.push({ ids, badgeTypeId: options.badgeTypeId });
+        return [];
+      },
+    });
+    await load({ badgeIds: [3, "2", 2, -1], tier: "gold" });
+    await load({ badgeIds: [2, 3] });
+    assert.deepEqual(
+      calls,
+      [{ ids: [2, 3], badgeTypeId: undefined }],
+      "the same IDs in another order reuse the cached feed"
+    );
   });
 
   test("expires successful responses and isolates different viewers", async function (assert) {
@@ -104,61 +110,44 @@ module("Highlighted Badges | requests", function () {
     assert.strictEqual(calls, 3, "another account has a separate cache");
   });
 
-  test("retries a failed grant without refetching successful grants", async function (assert) {
-    const calls = [];
-    let fail = true;
+  test("renders nothing after a failed request and retries on the next load", async function (assert) {
+    let calls = 0;
     const load = createBadgeLoader({
-      fetchGrants: async (id) => {
-        calls.push(id);
-        if (id === 2 && fail) {
+      fetchGrants: async () => {
+        calls++;
+        if (calls === 1) {
           throw new Error("Temporary failure");
         }
-        return [{ id, user: { id }, grantedAt: id * 100 }];
+        return [{ id: 1, user: { id: 1 }, grantedAt: 100 }];
       },
     });
+    assert.deepEqual(await load({}), []);
     assert.deepEqual(
-      (await load({ badgeIds: [1, 2] })).map((grant) => grant.id),
+      (await load({})).map((grant) => grant.id),
       [1]
     );
-    fail = false;
-    assert.deepEqual(
-      (await load({ badgeIds: [1, 2] })).map((grant) => grant.id),
-      [2, 1]
-    );
-    assert.deepEqual(calls, [1, 2, 2]);
+    assert.strictEqual(calls, 2);
   });
 
-  test("tier and count changes reuse cached data without caching the filtered result", async function (assert) {
-    let indexCalls = 0;
-    const grantCalls = [];
+  test("count changes reuse the cached feed", async function (assert) {
+    let calls = 0;
     const load = createBadgeLoader({
-      fetchBadges: async () => {
-        indexCalls++;
-        return {
-          badges: [
-            { id: 1, enabled: true, grant_count: 2, badge_type_id: 1 },
-            { id: 2, enabled: true, grant_count: 2, badge_type_id: 2 },
-          ],
-        };
-      },
-      fetchGrants: async (id) => {
-        grantCalls.push(id);
-        return [{ id, user: { id }, grantedAt: id * 100 }];
+      fetchGrants: async () => {
+        calls++;
+        return [
+          { id: 2, user: { id: 2 }, grantedAt: 200 },
+          { id: 1, user: { id: 1 }, grantedAt: 100 },
+        ];
       },
     });
     assert.deepEqual(
-      (await load({ tier: "gold" })).map((grant) => grant.id),
-      [1]
-    );
-    assert.deepEqual(
-      (await load({ tier: "all", count: 1 })).map((grant) => grant.id),
+      (await load({ count: 1 })).map((grant) => grant.id),
       [2]
     );
     assert.deepEqual(
-      (await load({ tier: "all", count: 6 })).map((grant) => grant.id),
+      (await load({ count: 6 })).map((grant) => grant.id),
       [2, 1]
     );
-    assert.strictEqual(indexCalls, 1);
-    assert.deepEqual(grantCalls, [1, 2]);
+    assert.strictEqual(calls, 1);
   });
 });
