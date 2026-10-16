@@ -10,7 +10,10 @@ export default apiInitializer((api) => {
       args: {
         title: "featured_badges.title",
         linkLabel: "featured_badges.link_label",
-        badgeIds: settings.featured_badges_badge_ids,
+        badgeIds: settings.featured_badges_badge_ids
+          .split("|")
+          .map(Number)
+          .filter((id) => id > 0),
         tier: settings.featured_badges_tiers,
         count: settings.featured_badges_count,
       },

@@ -76,7 +76,7 @@
   }
 }
 
-@container featured-badges (width < 40rem) {
+@include container.until(sm, featured-badges) {
   .featured-badges {
     &__panel {
       background: var(--tc-FeaturedBadges-color-background-default);
@@ -156,7 +156,7 @@
   }
 }
 
-@container featured-badges (width >= 40rem) {
+@include container.from(sm, featured-badges) {
   .featured-badges {
     &__panel {
       display: flex;
@@ -244,7 +244,7 @@
       flex-shrink: 0;
     }
 
-    @container featured-badges (width < 40rem) {
+    @include container.until(sm, featured-badges) {
       display: none;
     }
   }
@@ -254,7 +254,7 @@
     flex-direction: column;
     gap: var(--space-3);
 
-    @container featured-badges (width >= 40rem) {
+    @include container.from(sm, featured-badges) {
       display: none;
     }
   }

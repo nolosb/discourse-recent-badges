@@ -15,7 +15,14 @@ import DSkeleton from "discourse/ui-kit/d-skeleton";
 import DUserLink from "discourse/ui-kit/d-user-link";
 import dAvatar from "discourse/ui-kit/helpers/d-avatar";
 import { i18n } from "discourse-i18n";
-import { loadBadgeGrants } from "../lib/badge-data";
+import { loadRecentMembers } from "../lib/badge-grants";
+
+const earnedAgo = (grantedAt) =>
+  relativeAge(new Date(grantedAt), {
+    format: "medium",
+    leaveAgo: true,
+    wrapInSpan: false,
+  });
 
 const FeaturedBadge = <template>
   <li class="featured-badge {{@grant.badge.badgeTypeClassName}}">
@@ -34,7 +41,7 @@ const FeaturedBadge = <template>
           @showName={{true}}
         />
       </span>
-      <span class="featured-badge__earned">{{@grant.earnedAgo}}</span>
+      <span class="featured-badge__earned">{{earnedAgo @grant.grantedAt}}</span>
     </div>
   </li>
 </template>;
@@ -68,9 +75,9 @@ const PanelChrome = <template>
     "Recently earned badges, adapting to the width of their container",
   allowedOutlets: ["main-outlet-blocks", "sidebar-discovery"],
   args: {
-    title: { type: "string", default: "featured_badges.title" },
-    linkLabel: { type: "string", default: "featured_badges.link_label" },
-    badgeIds: { type: "string", default: "" },
+    title: { type: "string", required: true },
+    linkLabel: { type: "string", required: true },
+    badgeIds: { type: "array", itemType: "number", default: [] },
     tier: {
       type: "string",
       enum: ["all", "gold", "silver", "bronze"],
@@ -80,28 +87,16 @@ const PanelChrome = <template>
   },
 })
 export default class BlockFeaturedBadges extends Component {
-  @service currentUser;
   @service router;
-  @service siteSettings;
 
   viewportEl = null;
 
   get visible() {
-    return (
-      this.siteSettings.enable_badges &&
-      this.router.currentRouteName === `discovery.${defaultHomepage()}`
-    );
-  }
-
-  get badgeIds() {
-    return this.args.badgeIds
-      .split("|")
-      .map(Number)
-      .filter((id) => Number.isInteger(id) && id > 0);
+    return this.router.currentRouteName === `discovery.${defaultHomepage()}`;
   }
 
   get skeletonRows() {
-    return Array.from({ length: this.args.count }, (_, index) => index);
+    return Array.from({ length: this.args.count });
   }
 
   @action
@@ -130,36 +125,18 @@ export default class BlockFeaturedBadges extends Component {
 
   @bind
   async fetchGrants() {
-    const grants = await loadBadgeGrants({
-      viewerId: this.currentUser?.id,
-      badgeIds: this.badgeIds,
+    const grants = await loadRecentMembers({
+      badgeIds: this.args.badgeIds,
       tier: this.args.tier,
       count: this.args.count,
     });
 
-    if (!grants.length) {
-      return null;
-    }
-
-    // Derive display values afresh without mutating cached model instances.
-    return grants.map((grant) => ({
-      id: grant.id,
-      user: grant.user,
-      badge: grant.badge,
-      earnedAgo: relativeAge(new Date(grant.grantedAt), {
-        format: "medium",
-        leaveAgo: true,
-        wrapInSpan: false,
-      }),
-    }));
+    return grants.length ? grants : null;
   }
 
   <template>
     {{#if this.visible}}
-      <DAsyncContent
-        @asyncData={{this.fetchGrants}}
-        @retainWhileReloading={{true}}
-      >
+      <DAsyncContent @asyncData={{this.fetchGrants}}>
         <:loading>
           <PanelChrome @title={{@title}} @linkLabel={{@linkLabel}}>
             <div class="featured-badges__loading" aria-busy="true">
@@ -169,8 +146,8 @@ export default class BlockFeaturedBadges extends Component {
                 @count={{@count}}
               />
               <div class="featured-badges__skeleton --rows" aria-hidden="true">
-                {{#each this.skeletonRows as |row|}}
-                  <div class="featured-badges__skeleton-row" data-row={{row}}>
+                {{#each this.skeletonRows}}
+                  <div class="featured-badges__skeleton-row">
                     <DSkeleton @variant="circle" @size="1.5rem" />
                     <DSkeleton @variant="text" @width="55%" />
                     <DSkeleton @variant="text" @width="2.5rem" />
@@ -182,38 +159,36 @@ export default class BlockFeaturedBadges extends Component {
         </:loading>
         <:empty></:empty>
         <:content as |grants|>
-          {{#if grants.length}}
-            <PanelChrome @title={{@title}} @linkLabel={{@linkLabel}}>
-              <div class="featured-badges__scroller">
-                <DButton
-                  @icon="chevron-left"
-                  @action={{this.scrollPrev}}
-                  @translatedTitle={{i18n
-                    (themePrefix "featured_badges.previous")
-                  }}
-                  class="featured-badges__arrow --prev"
-                />
+          <PanelChrome @title={{@title}} @linkLabel={{@linkLabel}}>
+            <div class="featured-badges__scroller">
+              <DButton
+                @icon="chevron-left"
+                @action={{this.scrollPrev}}
+                @translatedTitle={{i18n
+                  (themePrefix "featured_badges.previous")
+                }}
+                class="featured-badges__arrow --prev"
+              />
 
-                <div
-                  class="featured-badges__viewport"
-                  {{didInsert this.registerViewport}}
-                >
-                  <ul class="featured-badges__track">
-                    {{#each grants key="id" as |grant|}}
-                      <FeaturedBadge @grant={{grant}} />
-                    {{/each}}
-                  </ul>
-                </div>
-
-                <DButton
-                  @icon="chevron-right"
-                  @action={{this.scrollNext}}
-                  @translatedTitle={{i18n (themePrefix "featured_badges.next")}}
-                  class="featured-badges__arrow --next"
-                />
+              <div
+                class="featured-badges__viewport"
+                {{didInsert this.registerViewport}}
+              >
+                <ul class="featured-badges__track">
+                  {{#each grants key="id" as |grant|}}
+                    <FeaturedBadge @grant={{grant}} />
+                  {{/each}}
+                </ul>
               </div>
-            </PanelChrome>
-          {{/if}}
+
+              <DButton
+                @icon="chevron-right"
+                @action={{this.scrollNext}}
+                @translatedTitle={{i18n (themePrefix "featured_badges.next")}}
+                class="featured-badges__arrow --next"
+              />
+            </div>
+          </PanelChrome>
         </:content>
       </DAsyncContent>
     {{/if}}
