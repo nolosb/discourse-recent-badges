@@ -1,48 +1,52 @@
-# Featured Badges
+# Block: Featured Badges
 
-An independent Discourse theme component extracted from the Discourse Skills demo theme. The demo theme is unchanged; this component has no dependency on its styles, settings, translations, or layout.
-
-Displays recently earned badges, newest first, with one entry per member. Each entry links to the member and their badge and shows the age of the award. Wide containers show horizontally scrollable cards with previous/next buttons and the link to all badges in the header; containers narrower than 40rem show compact rows in a panel with the link in its footer. There is no automatic scrolling.
-
-## Installation and placement
-
-Install this directory as a theme component and attach it to your theme. By default it renders in the `main-outlet-blocks` block outlet on the current homepage (whichever page is configured as the homepage). It does not replace the homepage or register a homepage block layout.
-
-Set `featured_badges_location` to `sidebar` to render in Discourse's `sidebar-discovery` block outlet, or `none` to disable the component. On desktop it spans the category header, navigation, and content; below the `lg` breakpoint it stacks above them. Layout styles apply only while badges are actually rendered, so other pages and empty states keep their full-width content. The layout follows the actual component width, so a narrow main content area also uses rows.
-
-Visibility follows Discourse’s configured homepage via `defaultHomepage()`. Sidebar placement uses the `sidebar-discovery` outlet supplied by the discovery page. The component declares layouts for `main-outlet-blocks` and `sidebar-discovery`; block conditions select the configured placement. Discourse allows only one layout per block outlet, so these outlets must not already be owned by another theme or component.
-
-Both block placements are homepage-only and respect `enable_badges`. The component is independent of the demo theme and does not modify or extend its block layouts.
+Shows recently earned badges on the homepage, newest first, one entry per member. Wide containers show scrollable cards; containers narrower than 40rem show compact rows.
 
 ## Settings
 
-| Setting                   | Default | Behavior                                                                        |
-| ------------------------- | ------- | ------------------------------------------------------------------------------- |
-| `featured_badges_location`  | `main`  | `main`, `sidebar`, or `none`.                                                   |
-| `featured_badges_count`     | `6`     | Maximum distinct members, from 1 to 50.                                         |
-| `featured_badges_badge_ids` | Empty   | Selected badge IDs; these take precedence over tiers, as in the original.       |
-| `featured_badges_tiers`     | `all`   | Dropdown: All tiers, Gold, Silver, or Bronze. Applies when no IDs are selected. |
+| Setting                     | Default | Behavior                                                               |
+| --------------------------- | ------- | ---------------------------------------------------------------------- |
+| `featured_badges_location`  | `main`  | `main` (main-outlet-blocks), `sidebar` (sidebar-discovery), or `none`. |
+| `featured_badges_count`     | `6`     | Maximum distinct members, from 1 to 50.                                |
+| `featured_badges_badge_ids` | Empty   | Only feature these badges; takes precedence over the tier.             |
+| `featured_badges_tiers`     | `all`   | All tiers, Gold, Silver, or Bronze.                                    |
 
-The standalone default is main content. Recipients come from core's aggregate `/user_badges.json` feed: the 100 most recent grants across the selected badges (or every enabled, listable badge when no IDs are set), filtered by tier through `badge_type_id`. The latest grant for each member is retained, so a feed dominated by a few very active members can show fewer than `featured_badges_count` entries.
+## Conditions
 
-Change the title, link label, and arrow labels through the component's translations.
+The component renders only when:
 
-## Implementation
+- the `enable_badges` site setting is on
+- the current page is the configured homepage
+- at least one grant matches the badge selection
 
-`block-featured-badges.gjs` directly owns homepage visibility, fetching, scrolling, and the badge markup. Each placement has its own declarative block-outlet initializer, with placement controlled by setting conditions. The initializers pass the imported block class directly to `renderBlocks()`, so no pre-initializer or named block registration is needed. Both initializers pass title, link label, badge IDs, tier, and count through `args`. The block declares their types and defaults in its decorator and reads `this.args`; it does not read theme settings directly. The initializers pass the raw badge-ID string, which the block resolves into a numeric array. A local template-only `PanelChrome` renders the header, body and footer, as in the theme skills panels; the header and footer stay in place while a responsive skeleton fills the body during loading. An empty response renders nothing. There are no plugin-outlet connectors. Shared request caching and recent-member selection live in `lib/`.
-
-## Request caching
-
-The grant feed is cached in memory for 15 minutes, separately for each viewer and each badge selection. Concurrent component mounts share the pending request; returning to the homepage within that period reuses the data. A failed request renders nothing and is not cached. There is no background polling, and a full reload clears the cache.
-
-Explicit badge IDs are deduplicated and sorted, so the same selection in another order shares a cache entry. Count changes reuse the cached feed; relative times are recalculated each time the block renders its fetched content.
-
-A first visit needs a single request. Cached responses can delay newly earned badges by up to 15 minutes before the next visit refreshes them.
+Each placement owns its block outlet, so that outlet must not already be used by another theme or component.
 
 ## Styling
 
-Override the `--tc-FeaturedBadges-*` properties from `stylesheets/brand/tokens.scss` to customize colors, typography, padding, and rounding. No demo-theme mixins or variables are required.
+Override these properties on `:root`:
 
-## Validation
+```css
+:root {
+  /* Colors */
+  --tc-FeaturedBadges-color-background-default: var(--secondary);
+  --tc-FeaturedBadges-color-background-default-hovered: var(--primary-very-low);
+  --tc-FeaturedBadges-color-border-default: var(--primary-200);
+  --tc-FeaturedBadges-color-text-default: var(--primary);
+  --tc-FeaturedBadges-color-text-muted: var(--primary-high);
+  --tc-FeaturedBadges-color-text-link: var(--tertiary);
 
-Run `pnpm lint` for lint, formatting, and type checks. The included system spec checks Discourse's core features when run with the Discourse theme CLI and a test instance.
+  /* Typography */
+  --tc-FeaturedBadges-title-font-size: 1.25rem;
+  --tc-FeaturedBadges-font-size: 1rem;
+  --tc-FeaturedBadges-meta-font-size: 0.875rem;
+
+  /* Shape and spacing */
+  --tc-FeaturedBadges-border-radius: var(--d-border-radius-large);
+  --tc-FeaturedBadges-space-padding: 1rem;
+
+  /* Sidebar placement */
+  --tc-FeaturedBadges-sidebar-size-inline: 18rem;
+  --tc-FeaturedBadges-sidebar-space-gap-inline: var(--space-6);
+  --tc-FeaturedBadges-sidebar-space-gap-block: var(--space-4);
+}
+```
