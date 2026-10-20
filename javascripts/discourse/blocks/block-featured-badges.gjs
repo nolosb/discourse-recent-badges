@@ -8,6 +8,7 @@ import BadgePill from "discourse/components/user-badge";
 import { bind } from "discourse/lib/decorators";
 import { relativeAge } from "discourse/lib/formatter";
 import getURL from "discourse/lib/get-url";
+import { prioritizeNameInUx } from "discourse/lib/settings";
 import { defaultHomepage } from "discourse/lib/utilities";
 import DAsyncContent from "discourse/ui-kit/d-async-content";
 import DButton from "discourse/ui-kit/d-button";
@@ -24,6 +25,9 @@ const earnedAgo = (grantedAt) =>
     wrapInSpan: false,
   });
 
+const displayName = (user) =>
+  prioritizeNameInUx(user.name) ? user.name : user.username;
+
 const FeaturedBadge = <template>
   <li class="featured-badge {{@grant.badge.badgeTypeClassName}}">
     <DUserLink @user={{@grant.user}} class="featured-badge__avatar">
@@ -31,7 +35,7 @@ const FeaturedBadge = <template>
     </DUserLink>
     <div class="featured-badge__body">
       <DUserLink @user={{@grant.user}} class="featured-badge__username">
-        {{@grant.user.username}}
+        {{displayName @grant.user}}
       </DUserLink>
       {{! BadgePill doesn't splat attributes — the class must live on a wrapper }}
       <span class="featured-badge__badge">
